@@ -1,0 +1,18 @@
+name: Empyre3
+description: this plugin is really funny
+main: io.empyre.Empyre
+author: notjacob
+version: 1.0
+api-version: 1.13
+commands:
+  eco:
+    description: economy command
+    aliases: [economy]
+  bal:
+    description: balance command
+    aliases: [balance]
+  damage:
+    description: damage players
+    aliases: [dmg]
+  armor:
+    description: armor sets

@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
+group 'io.empyre'
+version '1.0'
+
+sourceSets.main {
+    java.srcDir("src/")
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+
+        content {
+            includeGroup 'org.bukkit'
+            includeGroup 'org.spigotmc'
+        }
+    }
+    maven {
+        url 'https://papermc.io/repo/repository/maven-public/'
+    }
+    maven {
+        name = "sonatype-oss-snapshots"
+        url = "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+    maven {
+        name = "codemc-repo"
+        url = "https://repo.codemc.org/repository/maven-public/"
+    }
+}
+
+dependencies {
+    compile "de.tr7zw:item-nbt-api:2.7.1"
+    compile 'fr.minuskube.inv:smart-invs:1.2.7'
+    compile "net.kyori:adventure-platform-bukkit:4.0.0-SNAPSHOT"
+    compileOnly 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
+    compile files('plugin.yml')
+}
+
+test {
+    useJUnitPlatform()
+}
