@@ -3,10 +3,14 @@ package io.empyre.armor;
 import org.bukkit.Material;
 
 public enum Appendage {
-    HELMET,
-    CHESTPLATE,
-    LEGGINGS,
-    BOOTS;
+    HELMET("generic.armorHead"),
+    CHESTPLATE("generic.armorBody"),
+    LEGGINGS("generic.armorLegs"),
+    BOOTS("generic.armorFeet");
+    public final String generic;
+    Appendage(String generic) {
+        this.generic=generic;
+    }
     public Material withType(ArmorType type) {
         switch (this) {
             case HELMET:

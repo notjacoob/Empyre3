@@ -1,8 +1,10 @@
 package io.empyre.events;
 
+import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import com.google.gson.JsonObject;
 import io.empyre.Empyre;
-import io.empyre.enums.Currencies;
+import io.empyre.armor.ArmorSet;
+import io.empyre.enums.Keys;
 import io.empyre.enums.Unicode;
 import io.empyre.io.Data;
 import io.empyre.io.User;
@@ -12,20 +14,18 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.intellij.lang.annotations.RegExp;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PlayerEvents implements Listener {
     private final HashMap<String, String> emojis = new HashMap<>();
@@ -33,9 +33,10 @@ public class PlayerEvents implements Listener {
         r.runTaskTimer(Empyre.getPlugin(), 5L, 5L);
         try {
             JsonObject emojisJSON = JsonUtil.loadJsonFile(new File(Data.PATH + "/emojis.json"));
+            System.out.println(emojisJSON == null);
             emojisJSON.get("emojis").getAsJsonArray().forEach(el -> {
                 JsonObject obj = el.getAsJsonObject();
-                emojis.put(":" + obj.get("prefix").getAsString() + ":", obj.get("unicode").getAsString());
+                emojis.put(obj.get("prefix").getAsString(), obj.get("unicode").getAsString());
             });
         } catch (IOException e) {
             e.printStackTrace();
@@ -51,8 +52,46 @@ public class PlayerEvents implements Listener {
     }
     @EventHandler(priority = EventPriority.HIGHEST)
     public void on(AsyncChatEvent ev) {
-        Component m = ev.message();
-        emojis.forEach((pr, uni) -> ev.message(m.replaceText(b -> b.match("" + pr).replacement(uni))));
+        AtomicReference<Component> m = new AtomicReference<>(ev.message());
+        emojis.forEach((pr, uni) -> {
+            ev.message(m.get().replaceText(b -> b.match(":" + pr + ":").replacement(uni)));
+            m.set(ev.message());
+        });
+    }
+    @EventHandler
+    public void on(PlayerArmorChangeEvent ev) {
+        if (ev.getOldItem() != null) {
+            if (ev.getOldItem().hasItemMeta()) {
+                if (ev.getOldItem().getItemMeta().getPersistentDataContainer().has(Keys.ARMOR_SET, PersistentDataType.STRING)) {
+                    String value = ev.getOldItem().getItemMeta().getPersistentDataContainer().get(Keys.ARMOR_SET, PersistentDataType.STRING);
+                    ArmorSet set = ArmorSet.getSets().get(value);
+                    if (set != null) {
+                        if (ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+                            double maxHealth = ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+                            ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth - set.getHealthIncrease());
+                            if (ev.getPlayer().getHealth() > maxHealth - set.getHealthIncrease()) {
+                                System.out.println(ev.getPlayer().getHealth() - maxHealth - set.getHealthIncrease());
+                                ev.getPlayer().damage(ev.getPlayer().getHealth() - maxHealth - set.getHealthIncrease());
+                            }
+                        }
+                    }
+                }
+        }
+        }
+        if (ev.getNewItem() != null) {
+            if (ev.getNewItem().hasItemMeta()) {
+                if (ev.getNewItem().getItemMeta().getPersistentDataContainer().has(Keys.ARMOR_SET, PersistentDataType.STRING)) {
+                    String value = ev.getNewItem().getItemMeta().getPersistentDataContainer().get(Keys.ARMOR_SET, PersistentDataType.STRING);
+                    ArmorSet set = ArmorSet.getSets().get(value);
+                    if (set != null) {
+                        if (ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+                            double maxHealth = ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+                            ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth + set.getHealthIncrease());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private BukkitRunnable r = new BukkitRunnable() {

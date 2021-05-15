@@ -5,5 +5,5 @@ public enum ArmorType {
     IRON,
     CHAIN,
     GOLD,
-    DIAMOND
+    DIAMOND;
 }

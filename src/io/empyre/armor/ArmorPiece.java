@@ -6,17 +6,21 @@ import io.empyre.Empyre;
 import io.empyre.util.ChatUtil;
 import io.empyre.util.JsonUtil;
 import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ArmorPiece {
 
-    public static ArmorPiece fromJSON(JsonObject object, String parent) {
+    public static ArmorPiece fromJSON(JsonObject object, ArmorSet parent) {
         Appendage a = Appendage.valueOf(object.get("appendage").getAsString());
         int modelDataKey=object.get("modelDataKey").getAsInt();
         int genericStat=object.get("genericStat").getAsInt();
@@ -44,15 +48,15 @@ public class ArmorPiece {
     private final int modelDataKey;
     private final int genericStat;
     private final ArmorType type;
-    private final String parent;
+    private final ArmorSet parent;
     private String title;
     private List<String> lore;
-    public ArmorPiece(String parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, String title) {
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, String title) {
         this(parent, app, modelDataKey, genericStat, type);
         this.title=title;
         this.lore= Collections.emptyList();
     }
-    public ArmorPiece(String parent, Appendage app, int modelDataKey, int genericStat, ArmorType type) {
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type) {
         this.app=app;
         this.parent=parent;
         this.modelDataKey=modelDataKey;
@@ -61,12 +65,12 @@ public class ArmorPiece {
         this.lore=Collections.emptyList();
         this.title=app.withType(type).name();
     }
-    public ArmorPiece(String parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, List<String> lore) {
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, List<String> lore) {
         this(parent, app, modelDataKey, genericStat, type);
         this.lore=lore;
         this.title=app.withType(type).name();
     }
-    public ArmorPiece(String parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, String title, List<String> lore) {
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, String title, List<String> lore) {
         this(parent, app, modelDataKey, genericStat, type);
         this.title=title;
         this.lore=lore;
@@ -90,13 +94,23 @@ public class ArmorPiece {
         return type;
     }
     public ItemStack toStack() {
+        List<String> finalLore = new ArrayList<>();
         ItemStack stack = new ItemStack(app.withType(type));
         ItemMeta meta = stack.getItemMeta();
+        meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(this.app.generic, genericStat, AttributeModifier.Operation.ADD_NUMBER));
         meta.setCustomModelData(modelDataKey);
         meta.setDisplayName(ChatUtil.cl(title));
-        meta.setLore(lore.stream().map(ChatUtil::cl).collect(Collectors.toList()));
-        meta.getPersistentDataContainer().set(new NamespacedKey(Empyre.getPlugin(), "armor_set"), PersistentDataType.STRING, parent);
+        if (genericStat > 0) {
+            finalLore.add(ChatUtil.cl("&b+" + genericStat + " armor"));
+        }
+        if (parent.getHealthIncrease() > 0) {
+            finalLore.add(ChatUtil.cl("&c+" + parent.getHealthIncrease() + " health"));
+        }
+        finalLore.addAll(lore);
+        meta.setLore(finalLore.stream().map(ChatUtil::cl).collect(Collectors.toList()));
+        meta.getPersistentDataContainer().set(new NamespacedKey(Empyre.getPlugin(), "armor_set"), PersistentDataType.STRING, parent.getKey());
         stack.setItemMeta(meta);
+        stack.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         return stack;
     }
     public JsonObject toJson() {

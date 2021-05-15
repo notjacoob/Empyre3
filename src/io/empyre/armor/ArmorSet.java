@@ -34,16 +34,18 @@ public class ArmorSet {
     private ArmorPiece HELMET;
     private ArmorPiece CHESTPLATE;
     private ArmorPiece LEGGINGS;
+    private final int healthIncrease; // this is per piece (multiplied by 4)
     private ArmorPiece BOOTS;
     private final String KEY;
 
-    private ArmorSet() {KEY="thisisneverused";}
+    private ArmorSet() {KEY="thisisneverused";healthIncrease=-1;}
     private ArmorSet(JsonObject obj) {
         KEY = obj.get("key").getAsString();
-        HELMET = ArmorPiece.fromJSON(obj.getAsJsonObject("helmet"), KEY);
-        CHESTPLATE = ArmorPiece.fromJSON(obj.getAsJsonObject("chestplate"), KEY);
-        LEGGINGS = ArmorPiece.fromJSON(obj.getAsJsonObject("leggings"), KEY);
-        BOOTS = ArmorPiece.fromJSON(obj.getAsJsonObject("boots"), KEY);
+        HELMET = ArmorPiece.fromJSON(obj.getAsJsonObject("helmet"), this);
+        CHESTPLATE = ArmorPiece.fromJSON(obj.getAsJsonObject("chestplate"), this);
+        LEGGINGS = ArmorPiece.fromJSON(obj.getAsJsonObject("leggings"), this);
+        BOOTS = ArmorPiece.fromJSON(obj.getAsJsonObject("boots"), this);
+        healthIncrease = obj.get("health_increase").getAsInt();
         sets.put(this.KEY, this);
     }
     public ArmorPiece getHelmet() {
@@ -61,5 +63,7 @@ public class ArmorSet {
     public String getKey() {
         return KEY;
     }
+    public int getHealthIncrease() {return healthIncrease;}
+    public int getHealthIncreaseRelative() {return healthIncrease*4;}
 
 }
