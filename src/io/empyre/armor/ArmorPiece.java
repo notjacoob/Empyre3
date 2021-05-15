@@ -1,20 +1,15 @@
 package io.empyre.armor;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import io.empyre.Empyre;
 import io.empyre.util.ChatUtil;
-import org.bukkit.Material;
+import io.empyre.util.JsonUtil;
 import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.inventory.ItemFactory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,9 +26,9 @@ public class ArmorPiece {
             JsonElement title = meta.getAsJsonObject().get("title");
             JsonElement lore = meta.getAsJsonObject().get("lore");
             if (title != null && lore != null) {
-                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, title.getAsString(), jsonArrayToStringArray(lore.getAsJsonArray()));
+                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, title.getAsString(), JsonUtil.jsonArrayToStringArray(lore.getAsJsonArray()));
             } else if (title == null && lore != null) {
-                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, jsonArrayToStringArray(lore.getAsJsonArray()));
+                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, JsonUtil.jsonArrayToStringArray(lore.getAsJsonArray()));
             } else if (title != null){
                 return new ArmorPiece(parent, a, modelDataKey, genericStat, type, title.getAsString());
             } else {
@@ -44,13 +39,6 @@ public class ArmorPiece {
         }
     }
 
-    private static List<String> jsonArrayToStringArray(JsonArray arr) {
-        List<String> list = new ArrayList<>();
-        arr.forEach(el -> {
-            list.add(el.getAsString());
-        });
-        return list;
-    }
 
     private final Appendage app;
     private final int modelDataKey;
@@ -101,11 +89,6 @@ public class ArmorPiece {
     public ArmorType getType() {
         return type;
     }
-    private JsonArray listToJsonArray(List<String> list) {
-        JsonArray arr = new JsonArray();
-        list.forEach(el -> arr.add(new JsonPrimitive(el)));
-        return arr;
-    }
     public ItemStack toStack() {
         ItemStack stack = new ItemStack(app.withType(type));
         ItemMeta meta = stack.getItemMeta();
@@ -124,7 +107,7 @@ public class ArmorPiece {
         obj.addProperty("armorType", type.name());
         JsonObject meta = new JsonObject();
         meta.addProperty("title", title);
-        meta.add("lore", listToJsonArray(lore));
+        meta.add("lore", JsonUtil.listToJsonArray(lore));
         obj.add("meta", meta);
         return obj;
     }

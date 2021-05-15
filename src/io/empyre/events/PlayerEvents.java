@@ -1,9 +1,12 @@
 package io.empyre.events;
 
+import com.google.gson.JsonObject;
 import io.empyre.Empyre;
 import io.empyre.enums.Currencies;
 import io.empyre.enums.Unicode;
+import io.empyre.io.Data;
 import io.empyre.io.User;
+import io.empyre.util.JsonUtil;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -18,10 +21,25 @@ import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.intellij.lang.annotations.RegExp;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 
 public class PlayerEvents implements Listener {
+    private final HashMap<String, String> emojis = new HashMap<>();
     public PlayerEvents() {
         r.runTaskTimer(Empyre.getPlugin(), 5L, 5L);
+        try {
+            JsonObject emojisJSON = JsonUtil.loadJsonFile(new File(Data.PATH + "/emojis.json"));
+            emojisJSON.get("emojis").getAsJsonArray().forEach(el -> {
+                JsonObject obj = el.getAsJsonObject();
+                emojis.put(":" + obj.get("prefix").getAsString() + ":", obj.get("unicode").getAsString());
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     @EventHandler
     public void on(PlayerJoinEvent event) {
@@ -34,13 +52,7 @@ public class PlayerEvents implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void on(AsyncChatEvent ev) {
         Component m = ev.message();
-        ev.message(m.replaceText(b -> {
-            b.match(":armor:").replacement(Unicode.ARMOR_ICON);
-        }).replaceText(b -> {
-            b.match(":heart:").replacement(Unicode.HEART_ICON);
-        }).replaceText(b -> {
-            b.match(":WideHardo:").replacement(Unicode.WideHardo);
-        }));
+        emojis.forEach((pr, uni) -> ev.message(m.replaceText(b -> b.match("" + pr).replacement(uni))));
     }
 
     private BukkitRunnable r = new BukkitRunnable() {
