@@ -24,22 +24,23 @@ public class ArmorPiece {
         Appendage a = Appendage.valueOf(object.get("appendage").getAsString());
         int modelDataKey=object.get("modelDataKey").getAsInt();
         int genericStat=object.get("genericStat").getAsInt();
+        int health = object.get("health").getAsInt();
         ArmorType type=ArmorType.valueOf(object.get("armorType").getAsString());
         JsonElement meta = object.get("meta");
         if (meta != null) {
             JsonElement title = meta.getAsJsonObject().get("title");
             JsonElement lore = meta.getAsJsonObject().get("lore");
             if (title != null && lore != null) {
-                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, title.getAsString(), JsonUtil.jsonArrayToStringArray(lore.getAsJsonArray()));
+                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, health, title.getAsString(), JsonUtil.jsonArrayToStringArray(lore.getAsJsonArray()));
             } else if (title == null && lore != null) {
-                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, JsonUtil.jsonArrayToStringArray(lore.getAsJsonArray()));
+                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, health,  JsonUtil.jsonArrayToStringArray(lore.getAsJsonArray()));
             } else if (title != null){
-                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, title.getAsString());
+                return new ArmorPiece(parent, a, modelDataKey, genericStat, type, health,  title.getAsString());
             } else {
-                return new ArmorPiece(parent, a, modelDataKey, genericStat, type);
+                return new ArmorPiece(parent, a, modelDataKey, genericStat,type, health);
             }
         } else {
-            return new ArmorPiece(parent, a, modelDataKey, genericStat, type);
+            return new ArmorPiece(parent, a, modelDataKey, genericStat, type, health);
         }
     }
 
@@ -47,31 +48,33 @@ public class ArmorPiece {
     private final Appendage app;
     private final int modelDataKey;
     private final int genericStat;
+    private final int healthIncrease;
     private final ArmorType type;
     private final ArmorSet parent;
     private String title;
     private List<String> lore;
-    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, String title) {
-        this(parent, app, modelDataKey, genericStat, type);
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, int healthIncrease, String title) {
+        this(parent, app, modelDataKey, genericStat, type, healthIncrease);
         this.title=title;
         this.lore= Collections.emptyList();
     }
-    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type) {
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, int healthIncrease) {
         this.app=app;
         this.parent=parent;
         this.modelDataKey=modelDataKey;
         this.genericStat=genericStat;
         this.type=type;
+        this.healthIncrease=healthIncrease;
         this.lore=Collections.emptyList();
         this.title=app.withType(type).name();
     }
-    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, List<String> lore) {
-        this(parent, app, modelDataKey, genericStat, type);
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, int healthIncrease, List<String> lore) {
+        this(parent, app, modelDataKey, genericStat, type, healthIncrease);
         this.lore=lore;
         this.title=app.withType(type).name();
     }
-    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, String title, List<String> lore) {
-        this(parent, app, modelDataKey, genericStat, type);
+    public ArmorPiece(ArmorSet parent, Appendage app, int modelDataKey, int genericStat, ArmorType type, int healthIncrease, String title, List<String> lore) {
+        this(parent, app, modelDataKey, genericStat, type, healthIncrease);
         this.title=title;
         this.lore=lore;
     }
@@ -86,6 +89,9 @@ public class ArmorPiece {
     }
     public String getTitle() {
         return ChatUtil.cl(title);
+    }
+    public int getHealthIncrease() {
+        return healthIncrease;
     }
     public List<String> getLore() {
         return lore.stream().map(ChatUtil::cl).collect(Collectors.toList());
@@ -103,8 +109,8 @@ public class ArmorPiece {
         if (genericStat > 0) {
             finalLore.add(ChatUtil.cl("&b+" + genericStat + " armor"));
         }
-        if (parent.getHealthIncrease() > 0) {
-            finalLore.add(ChatUtil.cl("&c+" + parent.getHealthIncrease() + " health"));
+        if (this.healthIncrease > 0) {
+            finalLore.add(ChatUtil.cl("&c+" + this.healthIncrease + " health"));
         }
         finalLore.addAll(lore);
         meta.setLore(finalLore.stream().map(ChatUtil::cl).collect(Collectors.toList()));

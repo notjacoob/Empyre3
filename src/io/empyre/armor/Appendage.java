@@ -1,6 +1,8 @@
 package io.empyre.armor;
 
+import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import org.bukkit.Material;
+import org.bukkit.event.inventory.InventoryType;
 
 public enum Appendage {
     HELMET("generic.armorHead"),
@@ -10,6 +12,13 @@ public enum Appendage {
     public final String generic;
     Appendage(String generic) {
         this.generic=generic;
+    }
+    public static Appendage fromSlotType(PlayerArmorChangeEvent.SlotType type) {
+        if (type == PlayerArmorChangeEvent.SlotType.HEAD) return HELMET;
+        else if (type== PlayerArmorChangeEvent.SlotType.CHEST) return CHESTPLATE;
+        else if (type== PlayerArmorChangeEvent.SlotType.LEGS) return LEGGINGS;
+        else if (type== PlayerArmorChangeEvent.SlotType.FEET) return BOOTS;
+        else return null;
     }
     public Material withType(ArmorType type) {
         switch (this) {

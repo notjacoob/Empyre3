@@ -3,6 +3,7 @@ package io.empyre.events;
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import com.google.gson.JsonObject;
 import io.empyre.Empyre;
+import io.empyre.armor.Appendage;
 import io.empyre.armor.ArmorSet;
 import io.empyre.enums.Keys;
 import io.empyre.enums.Unicode;
@@ -24,6 +25,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -66,12 +68,12 @@ public class PlayerEvents implements Listener {
                     String value = ev.getOldItem().getItemMeta().getPersistentDataContainer().get(Keys.ARMOR_SET, PersistentDataType.STRING);
                     ArmorSet set = ArmorSet.getSets().get(value);
                     if (set != null) {
-                        if (ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+                        if (ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH) != null && set.get(Appendage.fromSlotType(ev.getSlotType())).getHealthIncrease() > 0) {
                             double maxHealth = ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
-                            ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth - set.getHealthIncrease());
-                            if (ev.getPlayer().getHealth() > maxHealth - set.getHealthIncrease()) {
-                                System.out.println(ev.getPlayer().getHealth() - maxHealth - set.getHealthIncrease());
-                                ev.getPlayer().damage(ev.getPlayer().getHealth() - maxHealth - set.getHealthIncrease());
+                            double newHealth = set.get(Appendage.fromSlotType(ev.getSlotType())).getHealthIncrease();
+                            ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth - newHealth);
+                            if (ev.getPlayer().getHealth() > maxHealth - newHealth) {
+                                ev.getPlayer().damage(ev.getPlayer().getHealth() - maxHealth - newHealth);
                             }
                         }
                     }
@@ -84,9 +86,10 @@ public class PlayerEvents implements Listener {
                     String value = ev.getNewItem().getItemMeta().getPersistentDataContainer().get(Keys.ARMOR_SET, PersistentDataType.STRING);
                     ArmorSet set = ArmorSet.getSets().get(value);
                     if (set != null) {
-                        if (ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+                        if (ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH) != null && set.get(Appendage.fromSlotType(ev.getSlotType())).getHealthIncrease() > 0) {
                             double maxHealth = ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
-                            ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth + set.getHealthIncrease());
+                            double newHealth = set.get(Appendage.fromSlotType(ev.getSlotType())).getHealthIncrease();
+                            ev.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth + newHealth);
                         }
                     }
                 }
@@ -94,13 +97,14 @@ public class PlayerEvents implements Listener {
         }
     }
 
+    private final DecimalFormat f = new DecimalFormat("#.#");
     private BukkitRunnable r = new BukkitRunnable() {
         @Override
         public void run() {
             Bukkit.getOnlinePlayers().forEach(p -> {
-                Component c = Component.text(Unicode.HEART_ICON + p.getHealth() + "/" + p.getMaxHealth()).color(NamedTextColor.RED)
+                Component c = Component.text(Unicode.HEART_ICON + " " + f.format(p.getHealth()) + "/" + p.getMaxHealth()).color(NamedTextColor.RED)
                         .append(Component.text("           "))
-                        .append(Component.text(Unicode.ARMOR_ICON + p.getAttribute(Attribute.GENERIC_ARMOR).getValue()).color(NamedTextColor.AQUA));
+                        .append(Component.text(Unicode.ARMOR_ICON +" "+ p.getAttribute(Attribute.GENERIC_ARMOR).getValue()).color(NamedTextColor.AQUA));
                 p.sendActionBar(c);
             });
         }
